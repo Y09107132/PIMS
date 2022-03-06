@@ -1,0 +1,58 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="My" GeneratedClassName="MySettings" UseMySettingsClassName="true">
+  <Profiles />
+  <Settings>
+    <Setting Name="T49T" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">declare @tablename varchar(255), @execstr varchar(400),
+@indexid int,@objectid int,@frag decimal
+declare tables cursor for
+select table_schema+'.'+table_name
+from information_schema.tables
+where table_type = 'base table'
+create table #fraglist(objectname char(255),
+objectid int,indexname char(255),indexid int,
+lvl int,countpages int,countrows int,extents int,
+minrecsize int,maxrecsize int,avgrecsize int,
+forreccount int,extentswitches int,avgfreebytes int,
+extentfrag decimal,avgpagedensity int,scandensity decimal,
+bestcount int,actualcount int,logicalfrag decimal)
+open tables
+fetch next from tables into @tablename;
+while @@fetch_status = 0
+begin
+insert into #fraglist
+exec('dbcc showcontig ('''+@tablename+''')
+with fast, tableresults, all_indexes, no_infomsgs')
+fetch next from tables into @tablename
+end
+close tables
+deallocate tables
+declare indexes cursor for
+select objectname, objectid,indexid,logicalfrag from #fraglist
+where indexproperty (objectid,indexname,'indexdepth') &gt; 0
+open indexes
+fetch next from indexes into @tablename, @objectid, @indexid, @frag
+while @@fetch_status = 0
+begin
+print 'executing dbcc indexdefrag (0,'+rtrim(@tablename)+','+
+rtrim(@indexid)+')-fragmentation currently'
++rtrim(convert(varchar(15),@frag))+'%'
+select @execstr='dbcc indexdefrag(0,'+rtrim(@objectid)+',
+'+rtrim(@indexid)+')'
+exec (@execstr)
+fetch next from indexes into @tablename,@objectid,@indexid,@frag
+end
+close indexes
+deallocate indexes</Value>
+    </Setting>
+    <Setting Name="setting" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">徐敏|Yo9107132|报表|.|闭环</Value>
+    </Setting>
+    <Setting Name="MR" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">declare @t table(a varchar(23),b varchar(30) COLLATE Chinese_PRC_CS_AS,c nvarchar(15),d numeric(12,3),e numeric(5,2),f nvarchar(3),g nvarchar(2),h nvarchar(10),i nvarchar(2))</Value>
+    </Setting>
+    <Setting Name="TR" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">declare @t table(a varchar(23),b nvarchar(10),c numeric(7,3))</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
